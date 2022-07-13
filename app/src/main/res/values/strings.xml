@@ -1,0 +1,8 @@
+<resources>
+    <string name="app_name">MyAppPractis</string>
+
+    <string name="facebook_app_id">419225326811910</string>
+    <string name="fb_login_protocol_scheme">fb419225326811910</string>
+    <string name="facebook_client_token">31510a6c44936f46aab12c63d13a3032</string>
+
+</resources>
