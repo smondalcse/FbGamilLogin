@@ -45,6 +45,10 @@ public class MainActivity extends AppCompatActivity {
 
     private void forGoogle() {
         Log.i(TAG, "forGoogle: ");
+
+        // watch this video for gmail integration
+        //https://www.youtube.com/watch?v=suVgcrPwYKQ
+
         Button googleBtn = findViewById(R.id.btnGoogleLogin);
 
         gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN).requestEmail().build();
