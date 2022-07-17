@@ -20,6 +20,8 @@
 
     <Button
         android:id="@+id/btnFBLogin"
+        android:drawableTint="@color/white"
+        android:drawableLeft="@drawable/ic_fb"
         android:layout_marginTop="80dp"
         android:text="FB Login"
         android:layout_marginRight="50dp"
@@ -29,8 +31,35 @@
 
     <Button
         android:id="@+id/btnGoogleLogin"
+        android:drawableTint="@color/white"
+        android:drawableLeft="@drawable/ic_google"
         android:backgroundTint="#E65100"
         android:text="Google Login"
+        android:layout_marginTop="20dp"
+        android:layout_marginRight="50dp"
+        android:layout_marginLeft="50dp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" />
+
+
+    <TextView
+        android:textSize="20sp"
+        android:textStyle="bold"
+        android:layout_marginRight="50dp"
+        android:layout_marginLeft="50dp"
+        android:textColor="@color/black"
+        android:layout_marginTop="100dp"
+        android:textAlignment="center"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Whats on your mind. I am here to help you." />
+
+    <Button
+        android:id="@+id/btnLivechat"
+        android:drawableTint="@color/white"
+        android:drawableLeft="@drawable/ic_message"
+        android:backgroundTint="#880E4F"
+        android:text="Live Chat"
         android:layout_marginTop="20dp"
         android:layout_marginRight="50dp"
         android:layout_marginLeft="50dp"

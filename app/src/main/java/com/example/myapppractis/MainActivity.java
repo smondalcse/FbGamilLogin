@@ -66,6 +66,14 @@ public class MainActivity extends AppCompatActivity {
                 signIn();
             }
         });
+
+        Button btnLivechat = findViewById(R.id.btnLivechat);
+        btnLivechat.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                startActivity(new Intent(MainActivity.this, LiveChatActivity.class));
+            }
+        });
     }
 
     void signIn(){
