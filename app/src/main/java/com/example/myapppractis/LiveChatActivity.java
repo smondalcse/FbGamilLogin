@@ -1,10 +1,13 @@
 package com.example.myapppractis;
 
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import android.content.Intent;
 import android.os.Bundle;
+import android.speech.RecognizerIntent;
 import android.util.Log;
 import android.view.View;
 import android.widget.EditText;
@@ -23,12 +26,15 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
+import java.util.Locale;
+import java.util.Objects;
 
 public class LiveChatActivity extends AppCompatActivity {
     private static final String TAG = "LiveChatActivity";
+    private static final int REQUEST_CODE_SPEECH_INPUT = 1000;
 
     private RecyclerView chatsRV;
-    private ImageButton sendMsgIB;
+    private ImageButton sendMsgIB, idIVRecord;
     private EditText userMsgEdt;
     private final String USER_KEY = "user";
     private final String BOT_KEY = "bot";
@@ -78,6 +84,30 @@ public class LiveChatActivity extends AppCompatActivity {
             }
         });
 
+        idIVRecord = findViewById(R.id.idIVRecord);
+        idIVRecord.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent intent
+                        = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
+                intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL,
+                        RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
+                intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE,
+                        Locale.getDefault());
+                intent.putExtra(RecognizerIntent.EXTRA_PROMPT, "Speak to text");
+
+                try {
+                    startActivityForResult(intent, REQUEST_CODE_SPEECH_INPUT);
+                }
+                catch (Exception e) {
+                    Toast
+                            .makeText(LiveChatActivity.this, " " + e.getMessage(),
+                                    Toast.LENGTH_SHORT)
+                            .show();
+                }
+            }
+        });
+
         // on below line we are initialing our adapter class and passing our array list to it.
         messageRVAdapter = new MessageRVAdapter(messageModalArrayList, this);
 
@@ -112,9 +142,10 @@ public class LiveChatActivity extends AppCompatActivity {
             @Override
             public void onResponse(String response) {
                 String botResponse = response;
+                if (botResponse.equalsIgnoreCase("")) {
+                    botResponse = "Dont get any response yet.";
+                }
                 messageModalArrayList.add(new MessageModal(botResponse, BOT_KEY));
-
-                // notifying our adapter as data changed.
                 messageRVAdapter.notifyDataSetChanged();
             }
         }, new Response.ErrorListener() {
@@ -127,5 +158,22 @@ public class LiveChatActivity extends AppCompatActivity {
         // at last adding json object
         // request to our queue.
         queue.add(request);
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode,
+                                    @Nullable Intent data)
+    {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == REQUEST_CODE_SPEECH_INPUT) {
+            if (resultCode == RESULT_OK && data != null) {
+                ArrayList<String> result = data.getStringArrayListExtra(
+                        RecognizerIntent.EXTRA_RESULTS);
+
+                if (!Objects.requireNonNull(result).get(0).equalsIgnoreCase("")){
+                    sendMessage(Objects.requireNonNull(result).get(0));
+                }
+            }
+        }
     }
 }
