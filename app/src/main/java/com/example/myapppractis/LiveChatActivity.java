@@ -8,6 +8,10 @@ import androidx.recyclerview.widget.RecyclerView;
 import android.content.Intent;
 import android.os.Bundle;
 import android.speech.RecognizerIntent;
+import android.speech.tts.TextToSpeech;
+import android.speech.tts.Voice;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.util.Log;
 import android.view.View;
 import android.widget.EditText;
@@ -26,6 +30,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Locale;
 import java.util.Objects;
 
@@ -38,14 +43,10 @@ public class LiveChatActivity extends AppCompatActivity {
     private EditText userMsgEdt;
     private final String USER_KEY = "user";
     private final String BOT_KEY = "bot";
-
-    // creating a variable for
-    // our volley request queue.
     private RequestQueue mRequestQueue;
-
-    // creating a variable for array list and adapter class.
     private ArrayList<MessageModal> messageModalArrayList;
     private MessageRVAdapter messageRVAdapter;
+    private String msgType = "text";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -56,30 +57,36 @@ public class LiveChatActivity extends AppCompatActivity {
         sendMsgIB = findViewById(R.id.idIBSend);
         userMsgEdt = findViewById(R.id.idEdtMessage);
 
-        // below line is to initialize our request queue.
+        userMsgEdt.addTextChangedListener(new TextWatcher() {
+
+            public void afterTextChanged(Editable s) { }
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+
+                if (count > 0){
+                    sendMsgIB.setVisibility(View.VISIBLE);
+                    idIVRecord.setVisibility(View.GONE);
+                } else {
+                    sendMsgIB.setVisibility(View.GONE);
+                    idIVRecord.setVisibility(View.VISIBLE);
+                }
+
+            }
+        });
+
         mRequestQueue = Volley.newRequestQueue(LiveChatActivity.this);
         mRequestQueue.getCache().clear();
-
-        // creating a new array list
         messageModalArrayList = new ArrayList<>();
-
-        // adding on click listener for send message button.
         sendMsgIB.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                // checking if the message entered
-                // by user is empty or not.
                 if (userMsgEdt.getText().toString().isEmpty()) {
-                    // if the edit text is empty display a toast message.
                     Toast.makeText(LiveChatActivity.this, "Please enter your message..", Toast.LENGTH_SHORT).show();
                     return;
                 }
-
-                // calling a method to send message
-                // to our bot to get response.
+                msgType = "text";
                 sendMessage(userMsgEdt.getText().toString());
-
-                // below line we are setting text in our edit text as empty
                 userMsgEdt.setText("");
             }
         });
@@ -88,65 +95,52 @@ public class LiveChatActivity extends AppCompatActivity {
         idIVRecord.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Intent intent
-                        = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
-                intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL,
-                        RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
-                intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE,
-                        Locale.getDefault());
+                Intent intent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
+                intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
+                intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.getDefault());
                 intent.putExtra(RecognizerIntent.EXTRA_PROMPT, "Speak to text");
-
+                msgType = "voice";
                 try {
                     startActivityForResult(intent, REQUEST_CODE_SPEECH_INPUT);
                 }
                 catch (Exception e) {
-                    Toast
-                            .makeText(LiveChatActivity.this, " " + e.getMessage(),
-                                    Toast.LENGTH_SHORT)
-                            .show();
+                    Toast.makeText(LiveChatActivity.this, " " + e.getMessage(), Toast.LENGTH_SHORT).show();
                 }
             }
         });
-
-        // on below line we are initialing our adapter class and passing our array list to it.
         messageRVAdapter = new MessageRVAdapter(messageModalArrayList, this);
-
-        // below line we are creating a variable for our linear layout manager.
         LinearLayoutManager linearLayoutManager = new LinearLayoutManager(LiveChatActivity.this, RecyclerView.VERTICAL, false);
-
-        // below line is to set layout
-        // manager to our recycler view.
         chatsRV.setLayoutManager(linearLayoutManager);
-
-        // below line we are setting
-        // adapter to our recycler view.
         chatsRV.setAdapter(messageRVAdapter);
     }
 
     private void sendMessage(String userMsg) {
-        // below line is to pass message to our
-        // array list which is entered by the user.
         messageModalArrayList.add(new MessageModal(userMsg, USER_KEY));
         messageRVAdapter.notifyDataSetChanged();
 
-        // url for our brain
-        // make sure to add mshape for uid.
-        // make sure to add your url.
         String url = "http://115.69.213.102:5555/chat_service?text=" + userMsg;
+        Log.i(TAG, "sendMessage: " + url);
 
         // creating a variable for our request queue.
         RequestQueue queue = Volley.newRequestQueue(LiveChatActivity.this);
-
-
         StringRequest request = new StringRequest(Request.Method.GET, url, new Response.Listener<String>() {
             @Override
             public void onResponse(String response) {
-                String botResponse = response;
-                if (botResponse.equalsIgnoreCase("")) {
-                    botResponse = "Dont get any response yet.";
+
+                try {
+                    JSONObject objResponse = new JSONObject(response);
+                    String res = objResponse.getString("response");
+                    if (msgType.equalsIgnoreCase("voice"))
+                        textToSpeech(res);
+                    if (res.equalsIgnoreCase("")) {
+                        res = "Dont get any response yet.";
+                    }
+                    messageModalArrayList.add(new MessageModal(res, BOT_KEY));
+                    messageRVAdapter.notifyDataSetChanged();
+                    chatsRV.scrollToPosition(messageModalArrayList.size() - 1);
+                } catch (JSONException e) {
+                    e.printStackTrace();
                 }
-                messageModalArrayList.add(new MessageModal(botResponse, BOT_KEY));
-                messageRVAdapter.notifyDataSetChanged();
             }
         }, new Response.ErrorListener() {
             @Override
@@ -155,15 +149,11 @@ public class LiveChatActivity extends AppCompatActivity {
             }
         });
 
-        // at last adding json object
-        // request to our queue.
         queue.add(request);
     }
 
     @Override
-    protected void onActivityResult(int requestCode, int resultCode,
-                                    @Nullable Intent data)
-    {
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == REQUEST_CODE_SPEECH_INPUT) {
             if (resultCode == RESULT_OK && data != null) {
@@ -175,5 +165,22 @@ public class LiveChatActivity extends AppCompatActivity {
                 }
             }
         }
+    }
+
+    private TextToSpeech mTTS;
+    private void textToSpeech(String msg){
+        mTTS = new TextToSpeech(this, new TextToSpeech.OnInitListener() {
+            @Override
+            public void onInit(int status) {
+                if (status == TextToSpeech.SUCCESS){
+                    int result = mTTS.setLanguage(Locale.ENGLISH);
+                    mTTS.setPitch(1.1f);
+                    mTTS.setSpeechRate(1.1f);
+                    mTTS.speak(msg, TextToSpeech.QUEUE_FLUSH, null, null);
+                } else {
+                    Log.e("TTS", "Initialization failed");
+                }
+            }
+        });
     }
 }

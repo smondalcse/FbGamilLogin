@@ -7,6 +7,8 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.Toast;
 
 import com.facebook.CallbackManager;
@@ -26,7 +28,7 @@ import java.util.Arrays;
 public class MainActivity extends AppCompatActivity {
     private static final String TAG = "MainActivity";
     
-    private Button btnFBLogin;
+    private ImageView btnFBLogin, googleBtn;
     CallbackManager callbackManager;
 
     GoogleSignInOptions gso;
@@ -49,7 +51,7 @@ public class MainActivity extends AppCompatActivity {
         // watch this video for gmail integration
         //https://www.youtube.com/watch?v=suVgcrPwYKQ
 
-        Button googleBtn = findViewById(R.id.btnGoogleLogin);
+        googleBtn = findViewById(R.id.btnGoogleLogin);
 
         gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN).requestEmail().build();
         gsc = GoogleSignIn.getClient(this,gso);
@@ -58,7 +60,6 @@ public class MainActivity extends AppCompatActivity {
         if(acct!=null){
             navigateToSecondActivity();
         }
-
 
         googleBtn.setOnClickListener(new View.OnClickListener() {
             @Override
